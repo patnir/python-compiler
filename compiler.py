@@ -10,6 +10,7 @@ TOKEN_TYPES = [
     [r"\)", "cparen"],
 ]
 
+NL = '\n'
 
 @dataclasses.dataclass
 class Token:
@@ -57,7 +58,12 @@ class Parser:
 
 def main():
     tokens = Tokenizer("test.js").tokenize()
-    print("".join([str(token) + "\n" for token in tokens]))
+
+    print("".join([str(token) +
+                   f"{NL if index < len(tokens) - 1 else ''}"
+                   for index, token in enumerate(tokens)]
+                  )
+          )
 
     tree = Parser(tokens).parse()
     print(tree)
