@@ -37,25 +37,33 @@ class Tokenizer:
     def tokenize(self):
         tokens = []
         for x in self.file.read().split():
-            tokens.append(self._tokenize_one_token(x))
+            result = self._tokenize_one_token(x)
+            tokens.extend(result)
         return tokens
 
-    @staticmethod
-    def _tokenize_one_token(x):
+    def _tokenize_one_token(self, x):
         for token_type in TOKEN_TYPES:
-
             matching_token = f"\A{token_type[0]}"
-            print(matching_token)
             search_result = re.search(matching_token, x)
-            print(search_result)
             if search_result:
-                print(f"match! {x} {token_type}")
-                return Token(token_type=token_type[1], value=x)
+                length = search_result.span()[1] - search_result.span()[0]
+                if length != len(search_result.string):
+                    remaining = search_result.string[length:]
+                    result = [Token(token_type=token_type[1], value=x[0:length])]
+                    result.extend(self._tokenize_one_token(remaining))
+                    return result
+                else:
+                    return [Token(token_type=token_type[1], value=x)]
         raise CouldNotMatchTokenException(f"could not match {x} to any tokens")
 
 
-class Parse:
-    pass
+class Parser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+
+    def parse(self):
+        return ""
+
 
 tokens = Tokenizer("test.js").tokenize()
 print("".join([str(token) + "\n" for token in tokens]))
