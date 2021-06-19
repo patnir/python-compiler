@@ -1,5 +1,13 @@
 import dataclasses
 import re
+from typing import List
+
+
+@dataclasses.dataclass()
+class TokenType:
+    re_expression: str
+    identifier: str
+
 
 TOKEN_TYPES = [
     [r"\bdef\b", "def"],
@@ -11,6 +19,7 @@ TOKEN_TYPES = [
 ]
 
 NL = '\n'
+
 
 @dataclasses.dataclass
 class Token:
@@ -50,10 +59,21 @@ class Tokenizer:
 
 class Parser:
     def __init__(self, tokens):
-        self.tokens = tokens
+        self.tokens: List[Token] = tokens
 
     def parse(self):
-        return ""
+        return self.parse_def()
+
+    def parse_def(self):
+        name = self.consume("identifier")
+        return name
+
+    def consume(self, expected_type):
+        token = self.tokens.pop(0)
+        if token.token_type == expected_type:
+            return token
+
+        raise RuntimeError(f"Expected token type {expected_type} but got {token.token_type}")
 
 
 def main():
