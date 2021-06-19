@@ -1,4 +1,4 @@
-def f ()
+def f (asdf)
     1
 end
 

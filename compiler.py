@@ -27,18 +27,10 @@ class Tokenizer:
     def __init__(self, file_path):
         self.file = open(file_path, "r")
 
-    # def file_read(self):
-    #     f = self.file
-    #     current_string = f.read(1)
-    #     while f.tell() != -1:
-    #         print(current_string)
-    #         current_string = f.read(1)
-
     def tokenize(self):
         tokens = []
         for x in self.file.read().split():
-            result = self._tokenize_one_token(x)
-            tokens.extend(result)
+            tokens.extend(self._tokenize_one_token(x))
         return tokens
 
     def _tokenize_one_token(self, x):
