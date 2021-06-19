@@ -69,8 +69,20 @@ class Parser:
         return self.parse_def()
 
     def parse_def(self):
+        self.consume("def")
         name = self.consume("identifier")
+        self.parse_arg_names()
+        self.parse_expression()
+        self.consume("end")
         return name
+
+    def parse_arg_names(self):
+        self.consume("oparen")
+        self.consume("identifier")
+        self.consume("cparen")
+
+    def parse_expression(self):
+        self.consume("integer")
 
     def consume(self, expected_type):
         token = self.tokens.pop(0)
