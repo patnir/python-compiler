@@ -101,7 +101,7 @@ class Parser:
         self.consume("def")
         name = self.consume("identifier").value
         self.consume("oparen")
-        arg_names = self.parse_list(self.parse_identifier)
+        arg_names = self.parse_comma_separated_list(self.parse_identifier)
         self.consume("cparen")
         body = self.parse_expression()
         self.consume("end")
@@ -127,13 +127,16 @@ class Parser:
     def parse_call(self):
         name = self.consume("identifier").value
         self.consume("oparen")
-        arg_expressions = self.parse_list(self.parse_expression)
+        arg_expressions = self.parse_comma_separated_list(self.parse_expression)
         self.consume("cparen")
         return CallNode(name, arg_expressions)
 
-    def parse_list(self, parse_function):
+    def parse_comma_separated_list(self, parse_function, end_identifier="cparen"):
+        """
+        end_identifier: this could be ")", "]", etc.
+        """
         arg_list = []
-        if not self.peek("cparen"):
+        if not self.peek(end_identifier):
             arg_list.append(parse_function())
             while self.peek("comma"):
                 self.consume("comma")
