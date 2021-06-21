@@ -1,6 +1,8 @@
 import dataclasses
 import re
-from typing import List, Union
+from typing import List
+
+from node_definitions import DefNode, VarRef, CallNode, IntegerNode
 
 
 @dataclasses.dataclass()
@@ -60,34 +62,6 @@ class Tokenizer:
                     return result
                 return [Token(token_type=token_type.type, value=token)]
         raise CouldNotMatchTokenException(f"could not match {token} to any tokens")
-
-
-@dataclasses.dataclass
-class IntegerNode:
-    value: int
-
-
-@dataclasses.dataclass
-class VarRef:
-    value: str
-
-
-@dataclasses.dataclass
-class CallNode:
-    name: str
-    arg_expressions: Union[List[str], List[VarRef], List[int]]
-
-
-@dataclasses.dataclass
-class DefNode:
-    name: str
-    arg_names: List[str]
-    body: Union[IntegerNode, CallNode, VarRef]
-
-    def __init__(self, name, arg_names, body):
-        self.name = name
-        self.arg_names = arg_names
-        self.body = body
 
 
 class Parser:
