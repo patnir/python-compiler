@@ -1,8 +1,19 @@
 import dataclasses
 import re
+from enum import Enum
 from typing import List
 
 from node_definitions import DefNode, VarRef, CallNode, IntegerNode
+
+
+class TokenTypeEnum(str, Enum):
+    DEF = "def"
+    END = "end"
+    IDENTIFIER = "identifier"
+    INTEGER = "integer"
+    OPAREN = "oparen"
+    CPAREN = "cparen"
+    COMMA = "comma"
 
 
 @dataclasses.dataclass()
@@ -12,13 +23,13 @@ class TokenType:
 
 
 TOKEN_TYPES = [
-    TokenType(r"\bdef\b", "def"),
-    TokenType(r"\bend\b", "end"),
-    TokenType(r"\b[a-zA-Z]+\b", "identifier"),
-    TokenType(r"\b[0-9]+\b", "integer"),
-    TokenType(r"\(", "oparen"),
-    TokenType(r"\)", "cparen"),
-    TokenType(r",", "comma"),
+    TokenType(r"\bdef\b", TokenTypeEnum.DEF),
+    TokenType(r"\bend\b", TokenTypeEnum.END),
+    TokenType(r"\b[a-zA-Z]+\b", TokenTypeEnum.IDENTIFIER),
+    TokenType(r"\b[0-9]+\b", TokenTypeEnum.INTEGER),
+    TokenType(r"\(", TokenTypeEnum.OPAREN),
+    TokenType(r"\)", TokenTypeEnum.CPAREN),
+    TokenType(r",", TokenTypeEnum.COMMA),
 ]
 
 NL = '\n'
@@ -72,53 +83,53 @@ class Parser:
         return self.parse_def()
 
     def parse_def(self):
-        self.consume("def")
-        name = self.consume("identifier").value
-        self.consume("oparen")
+        self.consume(TokenTypeEnum.DEF)
+        name = self.consume(TokenTypeEnum.IDENTIFIER).value
+        self.consume(TokenTypeEnum.OPAREN)
         arg_names = self.parse_comma_separated_list(self.parse_identifier)
-        self.consume("cparen")
+        self.consume(TokenTypeEnum.CPAREN)
         body = self.parse_expression()
-        self.consume("end")
+        self.consume(TokenTypeEnum.END)
         return DefNode(name, arg_names, body)
 
     def parse_identifier(self):
-        return self.consume("identifier").value
+        return self.consume(TokenTypeEnum.IDENTIFIER).value
 
     def parse_var_ref(self):
-        return VarRef(self.consume("identifier").value)
+        return VarRef(self.consume(TokenTypeEnum.IDENTIFIER).value)
 
     def peek(self, token_type, offset=0):
         return self.tokens[offset].token_type == token_type
 
     def parse_expression(self):
-        if self.peek("integer"):
+        if self.peek(TokenTypeEnum.INTEGER):
             return self.parse_integer().value
-        if self.peek("identifier") and self.peek("oparen", 1):
+        if self.peek(TokenTypeEnum.IDENTIFIER) and self.peek(TokenTypeEnum.OPAREN, 1):
             return self.parse_call()
         # problem with this is that the body can be a variable
         return self.parse_var_ref()
 
     def parse_call(self):
-        name = self.consume("identifier").value
-        self.consume("oparen")
+        name = self.consume(TokenTypeEnum.IDENTIFIER).value
+        self.consume(TokenTypeEnum.OPAREN)
         arg_expressions = self.parse_comma_separated_list(self.parse_expression)
-        self.consume("cparen")
+        self.consume(TokenTypeEnum.CPAREN)
         return CallNode(name, arg_expressions)
 
-    def parse_comma_separated_list(self, parse_function, end_identifier="cparen"):
+    def parse_comma_separated_list(self, parse_function, end_identifier=TokenTypeEnum.CPAREN):
         """
         end_identifier: this could be ")", "]", etc.
         """
         arg_list = []
         if not self.peek(end_identifier):
             arg_list.append(parse_function())
-            while self.peek("comma"):
-                self.consume("comma")
+            while self.peek(TokenTypeEnum.COMMA):
+                self.consume(TokenTypeEnum.COMMA)
                 arg_list.append(parse_function())
         return arg_list
 
     def parse_integer(self):
-        return IntegerNode(int(self.consume("integer").value))
+        return IntegerNode(int(self.consume(TokenTypeEnum.INTEGER).value))
 
     def consume(self, expected_type):
         token = self.tokens.pop(0)
