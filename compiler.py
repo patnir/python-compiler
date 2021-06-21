@@ -70,7 +70,7 @@ class IntegerNode:
 @dataclasses.dataclass
 class CallNode:
     name: str
-    arg_names: List[str]
+    arg_expressions: List[str]
 
 
 @dataclasses.dataclass
@@ -122,14 +122,19 @@ class Parser:
     def parse_call(self):
         name = self.consume("identifier").value
         self.consume("oparen")
-        arg_names = []
+        arg_expressions = []
         if self.peek("identifier"):
-            arg_names.append(self.consume("identifier").value)
+            arg_expressions.append(self.consume("identifier").value)
+        elif self.peek("integer"):
+            arg_expressions.append(self.consume("integer").value)
         while self.peek("comma"):
             self.consume("comma")
-            arg_names.append(self.consume("identifier").value)
+            if self.peek("identifier"):
+                arg_expressions.append(self.consume("identifier").value)
+            elif self.peek("integer"):
+                arg_expressions.append(self.consume("integer").value)
         self.consume("cparen")
-        return CallNode(name, arg_names)
+        return CallNode(name, arg_expressions)
 
     def parse_integer(self):
         return IntegerNode(int(self.consume("integer").value))
