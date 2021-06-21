@@ -68,16 +68,21 @@ class IntegerNode:
 
 
 @dataclasses.dataclass
+class VarRef:
+    value: str
+
+
+@dataclasses.dataclass
 class CallNode:
     name: str
-    arg_expressions: List[str]
+    arg_expressions: Union[List[str], List[VarRef], List[int]]
 
 
 @dataclasses.dataclass
 class DefNode:
     name: str
     arg_names: List[str]
-    body: Union[IntegerNode, CallNode]
+    body: Union[IntegerNode, CallNode, VarRef]
 
     def __init__(self, name, arg_names, body):
         self.name = name
@@ -95,46 +100,45 @@ class Parser:
     def parse_def(self):
         self.consume("def")
         name = self.consume("identifier").value
-        arg_names = self.parse_arg_names()
+        self.consume("oparen")
+        arg_names = self.parse_list(self.parse_identifier)
+        self.consume("cparen")
         body = self.parse_expression()
         self.consume("end")
         return DefNode(name, arg_names, body)
 
-    def parse_arg_names(self):
-        self.consume("oparen")
-        arg_names = []
-        if self.peek("identifier"):
-            arg_names.append(self.consume("identifier").value)
-        while self.peek("comma"):
-            self.consume("comma")
-            arg_names.append(self.consume("identifier").value)
-        self.consume("cparen")
-        return arg_names
+    def parse_identifier(self):
+        return self.consume("identifier").value
 
-    def peek(self, token_type):
-        return self.tokens[0].token_type == token_type
+    def parse_var_ref(self):
+        return VarRef(self.consume("identifier").value)
+
+    def peek(self, token_type, offset=0):
+        return self.tokens[offset].token_type == token_type
 
     def parse_expression(self):
         if self.peek("integer"):
-            return self.parse_integer()
-        return self.parse_call()
+            return self.parse_integer().value
+        if self.peek("identifier") and self.peek("oparen", 1):
+            return self.parse_call()
+        # problem with this is that the body can be a variable
+        return self.parse_var_ref()
 
     def parse_call(self):
         name = self.consume("identifier").value
         self.consume("oparen")
-        arg_expressions = []
-        if self.peek("identifier"):
-            arg_expressions.append(self.consume("identifier").value)
-        elif self.peek("integer"):
-            arg_expressions.append(self.consume("integer").value)
-        while self.peek("comma"):
-            self.consume("comma")
-            if self.peek("identifier"):
-                arg_expressions.append(self.consume("identifier").value)
-            elif self.peek("integer"):
-                arg_expressions.append(self.consume("integer").value)
+        arg_expressions = self.parse_list(self.parse_expression)
         self.consume("cparen")
         return CallNode(name, arg_expressions)
+
+    def parse_list(self, parse_function):
+        arg_list = []
+        if not self.peek("cparen"):
+            arg_list.append(parse_function())
+            while self.peek("comma"):
+                self.consume("comma")
+                arg_list.append(parse_function())
+        return arg_list
 
     def parse_integer(self):
         return IntegerNode(int(self.consume("integer").value))
@@ -162,4 +166,4 @@ def compile_file(file_name):
 
 if __name__ == '__main__':
     compile_file("test.js")
-    compile_file("test1.js")
+    compile_file("test2.js")
