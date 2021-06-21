@@ -1,6 +1,6 @@
 import dataclasses
 import re
-from typing import List
+from typing import List, Union
 
 
 @dataclasses.dataclass()
@@ -68,10 +68,16 @@ class IntegerNode:
 
 
 @dataclasses.dataclass
+class CallNode:
+    name: str
+    arg_names: List[str]
+
+
+@dataclasses.dataclass
 class DefNode:
     name: str
     arg_names: List[str]
-    body: IntegerNode
+    body: Union[IntegerNode, CallNode]
 
     def __init__(self, name, arg_names, body):
         self.name = name
@@ -109,7 +115,21 @@ class Parser:
         return self.tokens[0].token_type == token_type
 
     def parse_expression(self):
-        return self.parse_integer()
+        if self.peek("integer"):
+            return self.parse_integer()
+        return self.parse_call()
+
+    def parse_call(self):
+        name = self.consume("identifier").value
+        self.consume("oparen")
+        arg_names = []
+        if self.peek("identifier"):
+            arg_names.append(self.consume("identifier").value)
+        while self.peek("comma"):
+            self.consume("comma")
+            arg_names.append(self.consume("identifier").value)
+        self.consume("cparen")
+        return CallNode(name, arg_names)
 
     def parse_integer(self):
         return IntegerNode(int(self.consume("integer").value))
@@ -122,9 +142,9 @@ class Parser:
         raise RuntimeError(f"Expected token type {expected_type} but got {token.token_type}")
 
 
-def main():
-    tokens = Tokenizer("test.js").tokenize()
-
+def compile_file(file_name):
+    tokens = Tokenizer(file_name).tokenize()
+    print("===============")
     print("".join([str(token) +
                    f"{NL if index < len(tokens) - 1 else ''}"
                    for index, token in enumerate(tokens)]
@@ -136,4 +156,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    compile_file("test.js")
+    compile_file("test1.js")
