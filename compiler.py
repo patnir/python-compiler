@@ -16,6 +16,7 @@ TOKEN_TYPES = [
     TokenType(r"\b[0-9]+\b", "integer"),
     TokenType(r"\(", "oparen"),
     TokenType(r"\)", "cparen"),
+    TokenType(r",", "comma"),
 ]
 
 NL = '\n'
@@ -61,6 +62,23 @@ class Tokenizer:
         raise CouldNotMatchTokenException(f"could not match {token} to any tokens")
 
 
+@dataclasses.dataclass
+class IntegerNode:
+    value: int
+
+
+@dataclasses.dataclass
+class DefNode:
+    name: str
+    arg_names: List[str]
+    body: IntegerNode
+
+    def __init__(self, name, arg_names, body):
+        self.name = name
+        self.arg_names = arg_names
+        self.body = body
+
+
 class Parser:
     def __init__(self, tokens):
         self.tokens: List[Token] = tokens
@@ -70,19 +88,31 @@ class Parser:
 
     def parse_def(self):
         self.consume("def")
-        name = self.consume("identifier")
-        self.parse_arg_names()
-        self.parse_expression()
+        name = self.consume("identifier").value
+        arg_names = self.parse_arg_names()
+        body = self.parse_expression()
         self.consume("end")
-        return name
+        return DefNode(name, arg_names, body)
 
     def parse_arg_names(self):
         self.consume("oparen")
-        self.consume("identifier")
+        arg_names = []
+        if self.peek("identifier"):
+            arg_names.append(self.consume("identifier").value)
+        while self.peek("comma"):
+            self.consume("comma")
+            arg_names.append(self.consume("identifier").value)
         self.consume("cparen")
+        return arg_names
+
+    def peek(self, token_type):
+        return self.tokens[0].token_type == token_type
 
     def parse_expression(self):
-        self.consume("integer")
+        return self.parse_integer()
+
+    def parse_integer(self):
+        return IntegerNode(int(self.consume("integer").value))
 
     def consume(self, expected_type):
         token = self.tokens.pop(0)
