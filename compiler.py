@@ -154,4 +154,5 @@ def compile_file(file_name):
 
 if __name__ == '__main__':
     compile_file("test.js")
+    compile_file("test1.js")
     compile_file("test2.js")
