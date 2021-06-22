@@ -1,5 +1,6 @@
 import dataclasses
 import re
+import os
 from enum import Enum
 from typing import List
 
@@ -139,6 +140,25 @@ class Parser:
         raise RuntimeError(f"Expected token type {expected_type} but got {token.token_type}")
 
 
+class Generator:
+    def __init__(self):
+        pass
+
+    def generate(self, node):
+        if isinstance(node, DefNode):
+            return f"def {node.name}({','.join(node.arg_names)}): return {node.body}"
+        raise RuntimeError(f"Unexpected ndoe type: {type(node)}")
+
+
+class WriteCodeToFile:
+    def __init__(self, code):
+        self.code = code
+
+    def write_to_working_directory(self, file_path):
+        with open(os.getcwd() + f"/outputs/{file_path}", "w") as file:
+            file.write(self.code)
+
+
 def compile_file(file_name):
     tokens = Tokenizer(file_name).tokenize()
     print("===============")
@@ -150,9 +170,14 @@ def compile_file(file_name):
 
     tree = Parser(tokens).parse()
     print(tree)
+    generated_code = Generator().generate(tree)
+    print("++++++++++++")
+    print(generated_code)
+    WriteCodeToFile(generated_code).write_to_working_directory("result.py")
 
 
 if __name__ == '__main__':
-    compile_file("test.js")
-    compile_file("test1.js")
-    compile_file("test2.js")
+    compile_file("test3.js")
+    # compile_file("test.js")
+    # compile_file("test1.js")
+    # compile_file("test2.js")
