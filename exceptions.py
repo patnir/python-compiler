@@ -1,0 +1,2 @@
+class CouldNotMatchTokenException(Exception):
+    pass
