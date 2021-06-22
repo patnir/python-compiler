@@ -145,8 +145,17 @@ class Generator:
         pass
 
     def generate(self, node):
+        if isinstance(node, int):
+            return f"{node}"
+        if isinstance(node, IntegerNode):
+            return f"{node.value}"
+        if isinstance(node, VarRef):
+            return f"{node.value}"
+        if isinstance(node, CallNode):
+            args = [self.generate(expression) for expression in node.arg_expressions]
+            return f"{node.name}({','.join(args)})"
         if isinstance(node, DefNode):
-            return f"def {node.name}({','.join(node.arg_names)}): return {node.body}"
+            return f"def {node.name}({','.join(node.arg_names)}): return {self.generate(node.body)}"
         raise RuntimeError(f"Unexpected ndoe type: {type(node)}")
 
 
@@ -173,11 +182,11 @@ def compile_file(file_name):
     generated_code = Generator().generate(tree)
     print("++++++++++++")
     print(generated_code)
-    WriteCodeToFile(generated_code).write_to_working_directory("result.py")
+    WriteCodeToFile(generated_code).write_to_working_directory(f"{file_name[:-3]}_result.py")
 
 
 if __name__ == '__main__':
     compile_file("test3.js")
-    # compile_file("test.js")
-    # compile_file("test1.js")
-    # compile_file("test2.js")
+    compile_file("test.js")
+    compile_file("test1.js")
+    compile_file("test2.js")
